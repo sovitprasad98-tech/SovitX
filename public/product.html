@@ -286,7 +286,7 @@ updateCartCount();
 // ── LOAD PRODUCT ──
 function getParam(k){return new URLSearchParams(window.location.search).get(k);}
 const productId = getParam('id');
-if(!productId){ window.location.href='store.html'; }
+// redirect check moved inside async init below
 
 async function loadProduct(){
   try{
@@ -528,18 +528,40 @@ document.head.appendChild(s);
 // ── INIT ──
 (async function() {
   try {
-    const res = await fetch('/api/config');
-    if (!res.ok) throw new Error('HTTP ' + res.status);
+    // Step 1: fetch config
+    const res = await fetch('/api/config', { headers: { 'X-Requested-With': 'SovitXFetch' } });
+    if (!res.ok) throw new Error('Config HTTP ' + res.status);
     const data = await res.json();
-    if (!data.firebase || !data.firebase.apiKey) throw new Error('Invalid config');
+    if (!data.firebase || !data.firebase.apiKey) throw new Error('Invalid config response');
+
+    // Step 2: init Firebase
     firebaseConfig = data.firebase;
     ZAP_KEY = data.zapKey || '';
     firebase.initializeApp(firebaseConfig);
     db = firebase.firestore();
-    loadProduct();
+
+    // Step 3: check product ID
+    if (!productId) {
+      window.location.href = 'store.html';
+      return;
+    }
+
+    // Step 4: load product
+    await loadProduct();
+
   } catch(e) {
-    console.error('Config failed:', e);
-    showToast('Connection failed: ' + e.message, 'error');
+    // Show visible error on page instead of silent fail
+    document.getElementById('productLayout').innerHTML = `
+      <div style="grid-column:1/-1;text-align:center;padding:60px 20px">
+        <div style="width:60px;height:60px;border-radius:50%;background:rgba(248,113,113,.1);border:2px solid rgba(248,113,113,.3);display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin:0 auto 16px">⚠️</div>
+        <div style="font-family:Syne,sans-serif;font-size:1.2rem;font-weight:700;color:#f87171;margin-bottom:8px">Failed to Load</div>
+        <div style="font-size:.83rem;color:var(--muted);margin-bottom:20px">${e.message}</div>
+        <button onclick="location.reload()" style="padding:10px 24px;background:var(--blue);border:none;border-radius:10px;color:#fff;font-family:DM Sans,sans-serif;font-size:.85rem;font-weight:600;cursor:pointer">
+          🔄 Retry
+        </button>
+        <a href="store.html" style="display:block;margin-top:12px;font-size:.8rem;color:var(--muted);text-decoration:none">← Back to Store</a>
+      </div>`;
+    document.getElementById('breadcrumbName').textContent = 'Error';
   }
 })();
 </script>
