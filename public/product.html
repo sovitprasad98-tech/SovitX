@@ -288,22 +288,7 @@ function getParam(k){return new URLSearchParams(window.location.search).get(k);}
 const productId = getParam('id');
 // redirect check moved inside async init below
 
-async function loadProduct(){
-  try{
-    const doc = await db.collection('products').doc(productId).get();
-    if(!doc.exists){ window.location.href='store.html'; return; }
-    product = {id:doc.id,...doc.data()};
-    screenshots = product.screenshots||[];
-    finalPrice = product.discountPrice || product.price;
-    renderProduct();
-    document.title = product.title + ' — SovitX Digital';
-    document.getElementById('breadcrumbName').textContent = product.title;
-    document.getElementById('navLogo').style.display='flex';
-  }catch(e){
-    console.error(e);
-    showToast('Failed to load product','error');
-  }
-}
+// loadProduct inlined in init
 
 function chipClass(b){
   if(!b) return '';
@@ -403,44 +388,7 @@ async function applyCoupon(){
   }catch(e){ status.className='coupon-status coupon-err'; status.textContent='Error checking coupon.'; }
 }
 
-// ── ZAPUPI PAYMENT FLOW ──
-ZapUPI.setPaymentCallbacks({
-  onSuccess: function(orderId) {
-    // Payment confirmed by ZapUPI — save order & show success
-    db.collection('orders').add({
-      productId:    product.id,
-      productTitle: product.title,
-      amount:       finalPrice,
-      ref:          orderId,
-      timestamp:    firebase.firestore.FieldValue.serverTimestamp(),
-      status:       'completed'
-    });
-    showSuccess();
-  },
-  onFailed: function(orderId) {
-    // Show toast error — existing UI pattern
-    showToast('Payment failed. Please try again.', 'error');
-    db.collection('orders').add({
-      productId:    product.id,
-      productTitle: product.title,
-      amount:       finalPrice,
-      ref:          orderId,
-      timestamp:    firebase.firestore.FieldValue.serverTimestamp(),
-      status:       'failed'
-    });
-  },
-  onTimeout: function(orderId) {
-    showToast('Payment timed out. Please retry.', 'error');
-    db.collection('orders').add({
-      productId:    product.id,
-      productTitle: product.title,
-      amount:       finalPrice,
-      ref:          orderId,
-      timestamp:    firebase.firestore.FieldValue.serverTimestamp(),
-      status:       'timeout'
-    });
-  },
-});
+// ZapUPI handled in init
 
 function initiatePayment(){
   if(!product) return;
@@ -534,32 +482,70 @@ document.head.appendChild(s);
     const data = await res.json();
     if (!data.firebase || !data.firebase.apiKey) throw new Error('Invalid config response');
 
-    // Step 2: init Firebase
+    // Step 2: init Firebase (safe — avoid duplicate app error)
     firebaseConfig = data.firebase;
     ZAP_KEY = data.zapKey || '';
-    firebase.initializeApp(firebaseConfig);
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
     db = firebase.firestore();
 
     // Step 3: check product ID
-    if (!productId) {
-      window.location.href = 'store.html';
-      return;
-    }
+    const pid = new URLSearchParams(window.location.search).get('id');
+    if (!pid) { window.location.href = 'store.html'; return; }
 
-    // Step 4: load product
-    await loadProduct();
+    // Step 4: fetch product directly
+    const doc = await db.collection('products').doc(pid).get();
+    if (!doc.exists) {
+      throw new Error('Product not found: ' + pid);
+    }
+    product = { id: doc.id, ...doc.data() };
+    screenshots = product.screenshots || [];
+    finalPrice  = product.discountPrice || product.price;
+    ZapUPI.setPaymentCallbacks({
+      onSuccess: function(orderId) {
+        db.collection('orders').add({
+          productId:    product.id,
+          productTitle: product.title,
+          amount:       finalPrice,
+          ref:          orderId,
+          timestamp:    firebase.firestore.FieldValue.serverTimestamp(),
+          status:       'completed'
+        });
+        showSuccess();
+      },
+      onFailed: function(orderId) {
+        showToast('Payment failed. Please try again.', 'error');
+        db.collection('orders').add({
+          productId: product.id, productTitle: product.title,
+          amount: finalPrice, ref: orderId,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          status: 'failed'
+        });
+      },
+      onTimeout: function(orderId) {
+        showToast('Payment timed out. Please retry.', 'error');
+        db.collection('orders').add({
+          productId: product.id, productTitle: product.title,
+          amount: finalPrice, ref: orderId,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          status: 'timeout'
+        });
+      },
+    });
+    renderProduct();
+    document.title = product.title + ' — SovitX Digital';
+    document.getElementById('breadcrumbName').textContent = product.title;
+    document.getElementById('navLogo').style.display = 'flex';
 
   } catch(e) {
-    // Show visible error on page instead of silent fail
     document.getElementById('productLayout').innerHTML = `
       <div style="grid-column:1/-1;text-align:center;padding:60px 20px">
-        <div style="width:60px;height:60px;border-radius:50%;background:rgba(248,113,113,.1);border:2px solid rgba(248,113,113,.3);display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin:0 auto 16px">⚠️</div>
-        <div style="font-family:Syne,sans-serif;font-size:1.2rem;font-weight:700;color:#f87171;margin-bottom:8px">Failed to Load</div>
-        <div style="font-size:.83rem;color:var(--muted);margin-bottom:20px">${e.message}</div>
-        <button onclick="location.reload()" style="padding:10px 24px;background:var(--blue);border:none;border-radius:10px;color:#fff;font-family:DM Sans,sans-serif;font-size:.85rem;font-weight:600;cursor:pointer">
-          🔄 Retry
-        </button>
-        <a href="store.html" style="display:block;margin-top:12px;font-size:.8rem;color:var(--muted);text-decoration:none">← Back to Store</a>
+        <div style="font-size:2rem;margin-bottom:12px">⚠️</div>
+        <div style="font-family:Syne,sans-serif;font-size:1.1rem;font-weight:700;color:#f87171;margin-bottom:8px">Failed to Load</div>
+        <div style="font-size:.82rem;color:var(--muted);margin-bottom:6px">${e.message}</div>
+        <button onclick="location.reload()" style="margin-top:16px;padding:10px 24px;background:var(--blue);border:none;border-radius:10px;color:#fff;font-family:DM Sans,sans-serif;font-size:.85rem;font-weight:600;cursor:pointer">🔄 Retry</button>
+        <a href="store.html" style="display:block;margin-top:10px;font-size:.8rem;color:var(--muted);text-decoration:none">← Back to Store</a>
       </div>`;
     document.getElementById('breadcrumbName').textContent = 'Error';
   }
