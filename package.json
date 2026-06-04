@@ -1,0 +1,9 @@
+{
+  "name": "sovitx-digital",
+  "version": "1.0.0",
+  "description": "SovitX Digital - Premium Digital Products",
+  "engines": { "node": "18.x" },
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  }
+}
