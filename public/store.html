@@ -377,7 +377,7 @@ function isFirebaseConfigured() {
 
 function initFirebaseDB() {
   try {
-    firebase.initializeApp(firebaseConfig);
+    if(!firebase.apps.length){ firebase.initializeApp(firebaseConfig); }
     db = firebase.firestore();
     return true;
   } catch(e) {
@@ -768,13 +768,13 @@ updateCartCount();
 // Load config first, then init Firebase
 (async function() {
   try {
-    const res = await fetch('/api/config');
+    const res = await fetch('/api/config', { headers: { 'X-Requested-With': 'SovitXFetch' } });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     if (!data.firebase || !data.firebase.apiKey) throw new Error('Invalid config');
     firebaseConfig = data.firebase;
     ZAP_KEY = data.zapKey || '';
-    firebase.initializeApp(firebaseConfig);
+    if(!firebase.apps.length){ firebase.initializeApp(firebaseConfig); }
     db = firebase.firestore();
     initFirebase();
   } catch(e) {
