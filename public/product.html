@@ -1,19 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script>
-// Securely load config from backend before Firebase init
-(async function() {
-  try {
-    const res = await fetch('/api/config');
-    const data = await res.json();
-    window.__FIREBASE_CONFIG__ = data.firebase;
-    window.__ZAP_KEY__ = data.zapKey;
-  } catch(e) {
-    console.error('Config load failed:', e);
-  }
-})();
-</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Product — SovitX Digital</title>
@@ -270,12 +257,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);ove
 
 <script>
 // ── FIREBASE CONFIG ── (same as store.html)
-const firebaseConfig = window.__FIREBASE_CONFIG__;
+let firebaseConfig = {};
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 // ── ZapUPI Key ──
-const ZAP_KEY = window.__ZAP_KEY__;
+let ZAP_KEY = "";
 
 // ── STATE ──
 let product = null;
@@ -539,7 +526,22 @@ s.textContent=`@keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{op
 document.head.appendChild(s);
 
 // ── INIT ──
-loadProduct();
+(async function() {
+  try {
+    const res = await fetch('/api/config');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (!data.firebase || !data.firebase.apiKey) throw new Error('Invalid config');
+    firebaseConfig = data.firebase;
+    ZAP_KEY = data.zapKey || '';
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    loadProduct();
+  } catch(e) {
+    console.error('Config failed:', e);
+    showToast('Connection failed: ' + e.message, 'error');
+  }
+})();
 </script>
 </body>
 </html>

@@ -1,19 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script>
-// Securely load config from backend before Firebase init
-(async function() {
-  try {
-    const res = await fetch('/api/config');
-    const data = await res.json();
-    window.__FIREBASE_CONFIG__ = data.firebase;
-    window.__ZAP_KEY__ = data.zapKey;
-  } catch(e) {
-    console.error('Config load failed:', e);
-  }
-})();
-</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Shop — SovitX Digital</title>
@@ -379,7 +366,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);ove
 // 🔧 FIREBASE CONFIG — apna config yahan paste karo
 // Firebase Console → Project Settings → Your Apps
 // ══════════════════════════════════════════
-const firebaseConfig = window.__FIREBASE_CONFIG__;
+let firebaseConfig = {}; // loaded from /api/config
 
 let db = null;
 
@@ -479,7 +466,7 @@ function renderCart(){
   document.getElementById('cartTotal').textContent='₹'+total.toLocaleString('en-IN');
 }
 // ── ZAPUPI CART PAYMENT ──
-const ZAP_KEY = window.__ZAP_KEY__;
+let ZAP_KEY = "";
 let cartFinalTotal = 0;
 let cartCouponDiscount = 0;
 
@@ -778,7 +765,34 @@ document.head.appendChild(styleEl);
 
 // ── INIT ──
 updateCartCount();
-initFirebase();
+// Load config first, then init Firebase
+(async function() {
+  try {
+    const res = await fetch('/api/config');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (!data.firebase || !data.firebase.apiKey) throw new Error('Invalid config');
+    firebaseConfig = data.firebase;
+    ZAP_KEY = data.zapKey || '';
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    initFirebase();
+  } catch(e) {
+    console.error('Config/Firebase init failed:', e);
+    document.getElementById('productsGrid').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon" style="background:rgba(248,113,113,.08);border-color:rgba(248,113,113,.2)">
+          <i class="fa-solid fa-triangle-exclamation" style="color:#f87171"></i>
+        </div>
+        <h3 style="color:#f87171">Connection Failed</h3>
+        <p>Backend se config load nahi hua. Vercel Environment Variables check karo.</p>
+        <div style="margin-top:12px;font-size:.72rem;color:var(--muted);opacity:.7">${e.message}</div>
+        <button onclick="location.reload()" style="margin-top:16px;padding:10px 22px;background:var(--blue);border:none;border-radius:10px;color:#fff;font-family:DM Sans,sans-serif;font-size:.83rem;font-weight:600;cursor:pointer">
+          <i class="fa-solid fa-rotate-right"></i> Retry
+        </button>
+      </div>`;
+  }
+})();
 </script>
 
 <!-- CHECKOUT MODAL -->
