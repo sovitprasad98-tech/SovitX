@@ -235,6 +235,73 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);ove
 .btn-dl:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(16,185,129,.35)}
 .success-note{font-size:.72rem;color:var(--muted);line-height:1.5}
 
+
+/* ── PRODUCT DETAIL DRAWER ── */
+.pd-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);z-index:500;opacity:0;visibility:hidden;transition:all .3s}
+.pd-overlay.open{opacity:1;visibility:visible}
+.pd-drawer{position:fixed;top:0;right:0;bottom:0;width:min(580px,100vw);background:var(--bg2);border-left:1px solid var(--border);z-index:501;transform:translateX(100%);transition:transform .35s cubic-bezier(.16,1,.3,1);overflow-y:auto;display:flex;flex-direction:column}
+.pd-drawer.open{transform:translateX(0)}
+.pd-head{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg2);z-index:2;flex-shrink:0}
+.pd-head-title{font-family:'Syne',sans-serif;font-size:.9rem;font-weight:700;color:var(--white);display:flex;align-items:center;gap:8px}
+.pd-head-title i{color:var(--blue)}
+.pd-close{width:32px;height:32px;border:1px solid var(--border);background:var(--surface);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:.85rem;transition:color .2s;flex-shrink:0}
+.pd-close:hover{color:var(--white)}
+.pd-body{padding:20px;flex:1}
+.pd-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:80px 20px;color:var(--muted);font-size:.85rem}
+.pd-loading i{font-size:1.8rem;color:var(--blue);opacity:.6;animation:pdspin .8s linear infinite}
+@keyframes pdspin{to{transform:rotate(360deg)}}
+.pd-error{display:flex;flex-direction:column;align-items:center;gap:10px;padding:60px 20px;text-align:center}
+.pd-error i{font-size:2rem;color:#f87171;opacity:.7}
+.pd-error h3{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;color:#f87171}
+.pd-error p{font-size:.82rem;color:var(--muted);max-width:280px;line-height:1.6}
+.pd-banner{width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:linear-gradient(135deg,#0a1628,#0d2255);border:1px solid var(--border);margin-bottom:18px}
+.pd-banner img{width:100%;height:100%;object-fit:cover}
+.pd-banner-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:3rem;color:rgba(255,255,255,.1)}
+.pd-badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:100px;font-size:.68rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px}
+.pd-title{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:var(--white);margin-bottom:8px;line-height:1.25}
+.pd-short{font-size:.84rem;color:var(--muted);line-height:1.65;margin-bottom:14px}
+.pd-divider{height:1px;background:var(--border);margin:14px 0}
+.pd-pricing{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.pd-price{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:var(--blue-light)}
+.pd-original{font-size:.9rem;color:var(--muted);text-decoration:line-through}
+.pd-disc{padding:3px 10px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.25);border-radius:100px;font-size:.72rem;font-weight:700;color:#10b981}
+.pd-perks{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.pd-perk{display:flex;align-items:center;gap:10px;font-size:.82rem;color:var(--muted)}
+.pd-perk i{color:#10b981;width:16px;font-size:.82rem}
+.pd-section-label{font-size:.72rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.pd-coupon-wrap{display:flex;gap:8px;margin-bottom:6px}
+.pd-coupon-input{flex:1;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.82rem;outline:none;transition:border-color .2s}
+.pd-coupon-input::placeholder{color:var(--muted)}
+.pd-coupon-input:focus{border-color:rgba(26,107,255,.5)}
+.pd-coupon-btn{padding:10px 14px;background:rgba(26,107,255,.15);border:1px solid rgba(26,107,255,.3);border-radius:10px;color:var(--blue-light);font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
+.pd-coupon-btn:hover{background:rgba(26,107,255,.25)}
+.pd-coupon-status{font-size:.73rem;min-height:16px;margin-bottom:8px}
+.pd-coupon-ok{color:#10b981}
+.pd-coupon-err{color:#f87171}
+.pd-btn-pay{width:100%;padding:14px;background:linear-gradient(135deg,var(--blue),var(--blue-dark));border:none;border-radius:12px;color:#fff;font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;transition:all .25s;margin-bottom:10px}
+.pd-btn-pay:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(26,107,255,.4)}
+.pd-btn-pay:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.pd-btn-demo{width:100%;padding:12px;background:transparent;border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;text-decoration:none;margin-bottom:10px}
+.pd-btn-demo:hover{border-color:rgba(26,107,255,.4);background:rgba(26,107,255,.06);color:var(--white)}
+.pd-desc-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px}
+.pd-desc-box-title{font-family:'Syne',sans-serif;font-size:.82rem;font-weight:700;color:var(--white);margin-bottom:10px;display:flex;align-items:center;gap:7px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.pd-desc-box-title i{color:var(--blue);font-size:.8rem}
+.pd-desc-text{font-size:.82rem;color:var(--muted);line-height:1.8}
+.pd-tech-tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.pd-tech-tag{padding:3px 10px;background:rgba(26,107,255,.08);border:1px solid rgba(26,107,255,.2);border-radius:100px;font-size:.7rem;font-weight:600;color:var(--blue-light)}
+.pd-ss-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:12px}
+.pd-ss-thumb{aspect-ratio:16/9;border-radius:8px;overflow:hidden;cursor:zoom-in;border:1px solid var(--border);background:var(--surface)}
+.pd-ss-thumb:hover{border-color:rgba(26,107,255,.4)}
+.pd-ss-thumb img{width:100%;height:100%;object-fit:cover}
+/* Lightbox */
+.pd-lb{position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:9000;display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:opacity .3s}
+.pd-lb.open{opacity:1;visibility:visible}
+.pd-lb-img{max-width:90vw;max-height:85vh;border-radius:10px;object-fit:contain}
+.pd-lb-close{position:absolute;top:16px;right:16px;width:40px;height:40px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-size:1rem}
+.pd-lb-nav{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:40px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff}
+.pd-lb-prev{left:16px}
+.pd-lb-next{right:16px}
+
 </style>
 </head>
 <body>
@@ -646,7 +713,7 @@ function renderProducts(){
     const bannerHtml = p.banner
       ? `<img src="${p.banner}" alt="${p.title}" loading="lazy">`
       : `<div class="card-banner-placeholder"><i class="fa-solid fa-box"></i></div>`;
-    return `<div class="product-card" onclick="goProduct('${p.id}')" style="animation:fadeCardIn .4s ${i*0.06}s both">
+    return `<div class="product-card" onclick="openPdDrawer('${p.id}')" style="animation:fadeCardIn .4s ${i*0.06}s both">
       <div class="card-banner">
         ${bannerHtml}
         ${p.badge?`<span class="card-chip ${chipClass(p.badge)}">${p.badge}</span>`:''}
@@ -660,7 +727,7 @@ function renderProducts(){
           ${dp?`<span class="card-original">₹${p.price.toLocaleString('en-IN')}</span><span class="card-discount">${discPct}% OFF</span>`:''}
         </div>
         <div class="card-actions">
-          <a href="product.html?id=${p.id}" class="btn-view" onclick="event.stopPropagation()"><i class="fa-solid fa-eye" style="font-size:.7rem"></i> Details</a>
+          <button class="btn-view" onclick="openPdDrawer('${p.id}');event.stopPropagation()"><i class="fa-solid fa-eye" style="font-size:.7rem"></i> Details</button>
           <button class="btn-addcart" onclick="addToCart({id:'${p.id}',title:'${p.title.replace(/'/g,"\\'")}',price:${p.price},discountPrice:${p.discountPrice||p.price},banner:'${p.banner||''}'},event)"><i class="fa-solid fa-bag-shopping" style="font-size:.7rem"></i> Add to Cart</button>
         </div>
       </div>
@@ -668,7 +735,168 @@ function renderProducts(){
   }).join('');
 }
 
-function goProduct(id){ window.location.href=`product.html?id=${id}`; }
+function goProduct(id){ openPdDrawer(id); }
+
+// ── PRODUCT DETAIL DRAWER ──
+let pdProduct = null, pdScreenshots = [], pdFinalPrice = 0, pdLBIdx = 0;
+
+function openPdDrawer(id) {
+  const p = allProducts.find(x => x.id === id);
+  if (!p) return;
+  pdProduct = p;
+  pdScreenshots = p.screenshots || [];
+  pdFinalPrice = p.discountPrice || p.price || 0;
+  document.getElementById('pdOverlay').classList.add('open');
+  document.getElementById('pdDrawer').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  renderPdDrawer();
+  // Setup ZapUPI callbacks for this product
+  ZapUPI.setPaymentCallbacks({
+    onSuccess: function(orderId) {
+      if(db) db.collection('orders').add({ productId:pdProduct.id, productTitle:pdProduct.title, amount:pdFinalPrice, ref:orderId, timestamp:firebase.firestore.FieldValue.serverTimestamp(), status:'completed' });
+      closePdDrawer();
+      const link = pdProduct.downloadLink || pdProduct.productLink || '#';
+      document.getElementById('pdSuccessLink').textContent = link;
+      document.getElementById('pdDlBtn').href = link;
+      document.getElementById('paySuccessModal').classList.add('open');
+    },
+    onFailed: function(orderId) { showToast('Payment failed. Try again.','error'); },
+    onTimeout: function(orderId) { showToast('Payment timed out. Retry.','error'); }
+  });
+}
+
+function closePdDrawer() {
+  document.getElementById('pdOverlay').classList.remove('open');
+  document.getElementById('pdDrawer').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function renderPdDrawer() {
+  const p = pdProduct;
+  const dp = p.discountPrice && p.discountPrice < p.price;
+  const discPct = dp ? Math.round((1 - p.discountPrice/p.price)*100) : 0;
+  const chipMap = {new:'chip-new',popular:'chip-popular',hot:'chip-hot',sale:'chip-sale'};
+  const chipCls = p.badge ? chipMap[p.badge.toLowerCase()]||'chip-new' : '';
+  const bannerHtml = p.banner
+    ? `<div class="pd-banner"><img src="${p.banner}" alt="${p.title}"></div>`
+    : `<div class="pd-banner"><div class="pd-banner-ph"><i class="fa-solid fa-box"></i></div></div>`;
+  const ssHtml = pdScreenshots.length ? `
+    <div class="pd-section-label" style="margin-bottom:10px"><i class="fa-solid fa-images" style="color:var(--blue);margin-right:6px"></i>Screenshots (${pdScreenshots.length})</div>
+    <div class="pd-ss-grid">
+      ${pdScreenshots.map((s,i)=>`<div class="pd-ss-thumb" onclick="openPdLB(${i})"><img src="${s}" loading="lazy" alt="ss${i}"></div>`).join('')}
+    </div>` : '';
+  const tagsHtml = (p.techTags||[]).length ? `<div class="pd-tech-tags">${p.techTags.map(t=>`<span class="pd-tech-tag">${t}</span>`).join('')}</div>` : '';
+
+  document.getElementById('pdBody').innerHTML = `
+    ${bannerHtml}
+    ${p.badge ? `<span class="pd-badge ${chipCls}">${p.badge}</span>` : ''}
+    <div class="pd-title">${p.title}</div>
+    <div class="pd-short">${p.shortDesc||''}</div>
+    <div class="pd-divider"></div>
+    <div class="pd-pricing">
+      <span class="pd-price">₹${pdFinalPrice.toLocaleString('en-IN')}</span>
+      ${dp ? `<span class="pd-original">₹${p.price.toLocaleString('en-IN')}</span><span class="pd-disc">${discPct}% OFF</span>` : ''}
+    </div>
+    <div class="pd-perks">
+      <div class="pd-perk"><i class="fa-solid fa-bolt"></i> Instant delivery after payment</div>
+      <div class="pd-perk"><i class="fa-solid fa-rotate"></i> Lifetime free updates</div>
+      <div class="pd-perk"><i class="fa-solid fa-headset"></i> 24/7 support included</div>
+      <div class="pd-perk"><i class="fa-solid fa-shield-halved"></i> Secure & verified</div>
+    </div>
+    <div class="pd-divider"></div>
+    <div class="pd-section-label">Have a Coupon?</div>
+    <div class="pd-coupon-wrap">
+      <input class="pd-coupon-input" id="pdCouponInput" type="text" placeholder="Enter coupon code">
+      <button class="pd-coupon-btn" onclick="applyPdCoupon()">Apply</button>
+    </div>
+    <div class="pd-coupon-status" id="pdCouponStatus"></div>
+    <button class="pd-btn-pay" id="pdPayBtn" onclick="pdPay()">
+      <i class="fa-solid fa-lock"></i> Pay ₹<span id="pdPayPrice">${pdFinalPrice.toLocaleString('en-IN')}</span>
+    </button>
+    ${p.demoLink ? `<a class="pd-btn-demo" href="${p.demoLink}" target="_blank" rel="noopener"><i class="fa-solid fa-desktop"></i> View Live Demo</a>` : ''}
+    <div class="pd-divider"></div>
+    ${ssHtml}
+    ${p.description ? `
+    <div class="pd-desc-box">
+      <div class="pd-desc-box-title"><i class="fa-solid fa-align-left"></i> Description</div>
+      <div class="pd-desc-text">${p.description.replace(/\n/g,'<br>')}</div>
+      ${tagsHtml}
+    </div>` : ''}
+    ${p.requirements ? `
+    <div class="pd-desc-box">
+      <div class="pd-desc-box-title"><i class="fa-solid fa-list-check"></i> Requirements</div>
+      <div class="pd-desc-text">${p.requirements.replace(/\n/g,'<br>')}</div>
+    </div>` : ''}
+    <div style="font-size:.72rem;color:var(--muted);text-align:center;line-height:1.5;margin-top:8px">
+      <i class="fa-solid fa-shield-halved" style="color:var(--blue)"></i> Secure payment · Instant access after confirmation
+    </div>`;
+}
+
+async function applyPdCoupon() {
+  const code = document.getElementById('pdCouponInput').value.trim().toUpperCase();
+  const status = document.getElementById('pdCouponStatus');
+  if (!code) { status.className='pd-coupon-status pd-coupon-err'; status.textContent='Enter a coupon code.'; return; }
+  status.className='pd-coupon-status'; status.textContent='Checking...';
+  if (!db) { status.className='pd-coupon-status pd-coupon-err'; status.textContent='Not connected.'; return; }
+  try {
+    const snap = await db.collection('coupons').where('code','==',code).where('active','==',true).get();
+    if (snap.empty) { status.className='pd-coupon-status pd-coupon-err'; status.textContent='Invalid or expired coupon.'; return; }
+    const coupon = snap.docs[0].data();
+    const base = pdProduct.discountPrice || pdProduct.price;
+    pdFinalPrice = coupon.type==='percent' ? Math.round(base*(1-coupon.value/100)) : Math.max(1, base-coupon.value);
+    status.className='pd-coupon-status pd-coupon-ok';
+    status.textContent='✓ '+(coupon.type==='percent' ? coupon.value+'%' : '₹'+coupon.value)+' off applied!';
+    document.getElementById('pdPayPrice').textContent = pdFinalPrice.toLocaleString('en-IN');
+    showToast('Coupon applied! 🎉','success');
+  } catch(e) { status.className='pd-coupon-status pd-coupon-err'; status.textContent='Error: '+e.message; }
+}
+
+function pdPay() {
+  if (!pdProduct) return;
+  const btn = document.getElementById('pdPayBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner" style="animation:pdspin .8s linear infinite"></i> Opening payment...';
+  ZapUPI.createOrder(
+    { zap_key: ZAP_KEY, order_id: 'SVX'+Date.now(), amount: String(pdFinalPrice),
+      remark: (pdProduct.title||'').replace(/[^a-zA-Z0-9 ]/g,'').substring(0,50)||'SovitX Order' },
+    { onResponse: function(paymentUrl) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-lock"></i> Pay ₹<span id="pdPayPrice">'+pdFinalPrice.toLocaleString('en-IN')+'</span>';
+        ZapUPI.loadPayment(paymentUrl);
+      },
+      onError: function(err) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-lock"></i> Pay ₹<span id="pdPayPrice">'+pdFinalPrice.toLocaleString('en-IN')+'</span>';
+        showToast('Order error: '+err,'error');
+      }
+    }
+  );
+}
+
+function copyPdLink() {
+  navigator.clipboard.writeText(document.getElementById('pdSuccessLink').textContent)
+    .then(()=>showToast('Link copied!','success'));
+}
+
+// Lightbox
+function openPdLB(idx) { pdLBIdx=idx; document.getElementById('pdLBImg').src=pdScreenshots[idx]; document.getElementById('pdLB').classList.add('open'); }
+function closePdLB() { document.getElementById('pdLB').classList.remove('open'); }
+function pdLBNav(dir) { pdLBIdx=(pdLBIdx+dir+pdScreenshots.length)%pdScreenshots.length; document.getElementById('pdLBImg').src=pdScreenshots[pdLBIdx]; }
+document.getElementById('pdLB').addEventListener('click',e=>{ if(e.target===document.getElementById('pdLB'))closePdLB(); });
+document.addEventListener('keydown',e=>{
+  if(document.getElementById('pdLB').classList.contains('open')){
+    if(e.key==='ArrowLeft') pdLBNav(-1);
+    else if(e.key==='ArrowRight') pdLBNav(1);
+    else if(e.key==='Escape') closePdLB();
+  } else if(document.getElementById('pdDrawer').classList.contains('open') && e.key==='Escape') {
+    closePdDrawer();
+  }
+});
+
+// Close success modal on outside click
+document.getElementById('paySuccessModal').addEventListener('click',e=>{
+  if(e.target===document.getElementById('paySuccessModal')) document.getElementById('paySuccessModal').classList.remove('open');
+});
 
 // ── WISHLIST ──
 let wishlist = JSON.parse(localStorage.getItem('svx_wish')||'[]');
@@ -839,6 +1067,42 @@ updateCartCount();
       <i class="fa-solid fa-download"></i> Download Product
     </a>
     <div class="success-note">Save this link. Check your order in admin panel.</div>
+  </div>
+</div>
+
+
+<!-- PRODUCT DETAIL LIGHTBOX -->
+<div class="pd-lb" id="pdLB">
+  <div class="pd-lb-close" onclick="closePdLB()"><i class="fa-solid fa-xmark"></i></div>
+  <div class="pd-lb-nav pd-lb-prev" onclick="pdLBNav(-1)"><i class="fa-solid fa-chevron-left"></i></div>
+  <img class="pd-lb-img" id="pdLBImg" src="" alt="">
+  <div class="pd-lb-nav pd-lb-next" onclick="pdLBNav(1)"><i class="fa-solid fa-chevron-right"></i></div>
+</div>
+
+<!-- PRODUCT DETAIL DRAWER -->
+<div class="pd-overlay" id="pdOverlay" onclick="closePdDrawer()"></div>
+<div class="pd-drawer" id="pdDrawer">
+  <div class="pd-head">
+    <div class="pd-head-title"><i class="fa-solid fa-box"></i> Product Details</div>
+    <div class="pd-close" onclick="closePdDrawer()"><i class="fa-solid fa-xmark"></i></div>
+  </div>
+  <div class="pd-body" id="pdBody">
+    <div class="pd-loading"><i class="fa-solid fa-spinner"></i> Loading...</div>
+  </div>
+</div>
+
+<!-- PAYMENT SUCCESS MODAL -->
+<div class="modal-overlay" id="paySuccessModal" style="z-index:9500">
+  <div class="modal" style="background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:32px;max-width:400px;width:100%;text-align:center">
+    <div style="width:64px;height:64px;border-radius:50%;background:rgba(16,185,129,.1);border:2px solid rgba(16,185,129,.3);display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:#10b981;margin:0 auto 18px"><i class="fa-solid fa-check"></i></div>
+    <div style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:var(--white);margin-bottom:8px">Payment Successful! 🎉</div>
+    <div style="font-size:.83rem;color:var(--muted);margin-bottom:20px;line-height:1.6">Thank you! Your product is ready to download.</div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 14px;display:flex;align-items:center;gap:8px;margin-bottom:14px;text-align:left">
+      <span style="flex:1;font-size:.76rem;color:var(--blue-light);word-break:break-all;font-family:monospace" id="pdSuccessLink">#</span>
+      <button onclick="copyPdLink()" style="padding:5px 10px;background:rgba(26,107,255,.15);border:1px solid rgba(26,107,255,.3);border-radius:7px;color:var(--blue-light);font-size:.72rem;font-weight:600;cursor:pointer"><i class="fa-solid fa-copy"></i> Copy</button>
+    </div>
+    <a id="pdDlBtn" href="#" target="_blank" style="width:100%;padding:13px;background:linear-gradient(135deg,#10b981,#059669);border:none;border-radius:12px;color:#fff;font-family:'Syne',sans-serif;font-size:.92rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;margin-bottom:10px"><i class="fa-solid fa-download"></i> Download Product</a>
+    <div style="font-size:.72rem;color:var(--muted);line-height:1.5">Save this link for future access.</div>
   </div>
 </div>
 
