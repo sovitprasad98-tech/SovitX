@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script src="https://zapupi.com/single-html-web-kit.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <style>
 :root{--blue:#1A6BFF;--blue-light:#4F8EFF;--blue-dark:#0A3FCC;--bg:#04080F;--bg2:#070D1A;--surface:rgba(255,255,255,0.04);--border:rgba(255,255,255,0.07);--text:#F0F4FF;--muted:#7A8BAA;--white:#fff;--green:#10b981;--red:#f87171}
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
@@ -304,9 +304,10 @@ async function applyCoupon() {
   if (!code) { status.className='coupon-status coupon-err'; status.textContent='Enter a coupon code.'; return; }
   status.className='coupon-status'; status.textContent='Checking...';
   try {
-    const snap = await db.collection('coupons').where('code','==',code).where('active','==',true).get();
-    if (snap.empty) { status.className='coupon-status coupon-err'; status.textContent='Invalid or expired coupon.'; return; }
-    const coupon = snap.docs[0].data();
+    const couponSnap = await db.ref('coupons').once('value');
+    const allCoupons = couponSnap.val() ? Object.values(couponSnap.val()) : [];
+    const coupon = allCoupons.find(x => x.code === code && x.active === true);
+    if (!coupon) { status.className='coupon-status coupon-err'; status.textContent='Invalid or expired coupon.'; return; }
     const base = product.discountPrice || product.price;
     finalPrice = coupon.type==='percent' ? Math.round(base*(1-coupon.value/100)) : Math.max(1, base-coupon.value);
     status.className='coupon-status coupon-ok';
@@ -373,30 +374,30 @@ document.getElementById('lightbox').addEventListener('click',e=>{ if(e.target===
     // 3. Init Firebase
     ZAP_KEY = cfg.zapKey || '';
     if (!firebase.apps.length) firebase.initializeApp(cfg.firebase);
-    db = firebase.firestore();
+    db = firebase.database();
 
     // 4. Setup ZapUPI callbacks
     ZapUPI.setPaymentCallbacks({
       onSuccess: function(orderId) {
-        db.collection('orders').add({ productId:product.id, productTitle:product.title, amount:finalPrice, ref:orderId, timestamp:firebase.firestore.FieldValue.serverTimestamp(), status:'completed' });
+        db.ref('orders').push({ productId:product.id, productTitle:product.title, amount:finalPrice, ref:orderId, timestamp:firebase.firestore.FieldValue.serverTimestamp(), status:'completed' });
         showSuccess();
       },
       onFailed: function(orderId) {
         showToast('Payment failed. Try again.','error');
-        db.collection('orders').add({ productId:product.id, productTitle:product.title, amount:finalPrice, ref:orderId, timestamp:firebase.firestore.FieldValue.serverTimestamp(), status:'failed' });
+        db.ref('orders').push({ productId:product.id, productTitle:product.title, amount:finalPrice, ref:orderId, timestamp:firebase.firestore.FieldValue.serverTimestamp(), status:'failed' });
       },
       onTimeout: function(orderId) {
         showToast('Payment timed out. Retry.','error');
-        db.collection('orders').add({ productId:product.id, productTitle:product.title, amount:finalPrice, ref:orderId, timestamp:firebase.firestore.FieldValue.serverTimestamp(), status:'timeout' });
+        db.ref('orders').push({ productId:product.id, productTitle:product.title, amount:finalPrice, ref:orderId, timestamp:firebase.firestore.FieldValue.serverTimestamp(), status:'timeout' });
       }
     });
 
     // 5. Fetch product from Firestore
-    const doc = await db.collection('products').doc(pid).get();
-    if (!doc.exists) { showError('Product not found.', 'ID: '+pid); return; }
+    const docSnap = await db.ref('products/' + pid).once('value');
+    if (!docSnap.exists() || !docSnap.val()) { showError('Product not found.', 'ID: '+pid); return; }
 
     // 6. Render
-    product = { id:doc.id, ...doc.data() };
+    product = { id: pid, ...docSnap.val() };
     screenshots = product.screenshots || [];
     finalPrice = product.discountPrice || product.price || 0;
     document.title = product.title+' — SovitX Digital';

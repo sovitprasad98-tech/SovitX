@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script src="https://zapupi.com/single-html-web-kit.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <style>
 :root {
   --blue:#1A6BFF; --blue-light:#4F8EFF; --blue-dark:#0A3FCC;
@@ -445,7 +445,7 @@ function isFirebaseConfigured() {
 function initFirebaseDB() {
   try {
     if(!firebase.apps.length){ firebase.initializeApp(firebaseConfig); }
-    db = firebase.firestore();
+    db = firebase.database();
     return true;
   } catch(e) {
     console.error("Firebase init error:", e);
@@ -541,12 +541,12 @@ ZapUPI.setPaymentCallbacks({
   onSuccess: function(orderId) {
     // Save each cart item as an order
     cart.forEach(item => {
-      if(db) db.collection('orders').add({
+      if(db) db.ref('orders').push({
         productId:    item.id,
         productTitle: item.title,
         amount:       item.discountPrice || item.price,
         ref:          orderId,
-        timestamp:    firebase.firestore.FieldValue.serverTimestamp(),
+        timestamp: Date.now(),
         status:       'completed'
       });
     });
@@ -605,9 +605,10 @@ async function applyCartCoupon(){
   status.textContent='Checking...'; status.className='cm-coupon-status';
   if(!db){ status.className='cm-coupon-status cm-coupon-err'; status.textContent='Firebase not connected.'; return; }
   try{
-    const snap = await db.collection('coupons').where('code','==',code).where('active','==',true).get();
-    if(snap.empty){ status.className='cm-coupon-status cm-coupon-err'; status.textContent='Invalid or expired coupon.'; return; }
-    const coupon = snap.docs[0].data();
+    const snapC = await db.ref('coupons').once('value');
+    const allCoupons = snapC.val() ? Object.values(snapC.val()) : [];
+    const coupon = allCoupons.find(x => x.code === code && x.active === true);
+    if (!coupon) { status.className='cm-coupon-status cm-coupon-err'; status.textContent='Invalid or expired coupon.'; return; }
     const base = cart.reduce((s,i) => s+(i.discountPrice||i.price), 0);
     if(coupon.type==='percent'){ cartFinalTotal = Math.round(base*(1-coupon.value/100)); status.textContent='✓ '+coupon.value+'% off applied!'; }
     else{ cartFinalTotal = Math.max(1, base-coupon.value); status.textContent='✓ ₹'+coupon.value+' off applied!'; }
@@ -753,7 +754,7 @@ function openPdDrawer(id) {
   // Setup ZapUPI callbacks for this product
   ZapUPI.setPaymentCallbacks({
     onSuccess: function(orderId) {
-      if(db) db.collection('orders').add({ productId:pdProduct.id, productTitle:pdProduct.title, amount:pdFinalPrice, ref:orderId, timestamp:firebase.firestore.FieldValue.serverTimestamp(), status:'completed' });
+      if(db) db.ref('orders').push({ productId:pdProduct.id, productTitle:pdProduct.title, amount:pdFinalPrice, ref:orderId, timestamp:firebase.firestore.FieldValue.serverTimestamp(), status:'completed' });
       closePdDrawer();
       const link = pdProduct.downloadLink || pdProduct.productLink || '#';
       document.getElementById('pdSuccessLink').textContent = link;
@@ -933,9 +934,9 @@ function showNetworkError(err) {
   const isPermission = err && (err.code === 'permission-denied' || err.message?.includes('permission'));
   const isNotFound   = err && err.code === 'not-found';
   const msg = isPermission
-    ? 'Firestore Security Rules ne access block kiya. Rules mein <code>read: true</code> allow karo.'
+    ? 'Firebase RTDB Rules ne access block kiya. RTDB Rules mein ".read": true set karo.'
     : isNotFound
-    ? 'Firestore collection "products" nahi mili. Admin panel se pehle ek product add karo.'
+    ? 'RTDB mein products nahi mile. Admin panel se pehle ek product add karo.'
     : 'Network error ya Firebase unreachable. Internet check karo.';
   document.getElementById('productsGrid').innerHTML = `
     <div class="empty-state">
@@ -959,17 +960,22 @@ function retryLoad() {
 let unsubscribe = null;
 function startListener() {
   if(unsubscribe) unsubscribe();
-  unsubscribe = db.collection('products').orderBy('createdAt','desc').onSnapshot(
-    snapshot => {
-      allProducts = [];
-      snapshot.forEach(doc => allProducts.push({ id: doc.id, ...doc.data() }));
-      renderProducts();
-    },
-    err => {
-      console.error('Firestore error:', err);
+  // RTDB realtime listener
+  db.ref('products').on('value', snapshot => {
+    allProducts = [];
+    if (snapshot.val()) {
+      Object.entries(snapshot.val()).forEach(([k, v]) => allProducts.push({ id: k, ...v }));
+    }
+    renderProducts();
+    updateFilterCounts();
+  }, err => {
+    console.error('RTDB error:', err.code, err.message);
+    if (err.code === 'PERMISSION_DENIED') {
+      showNetworkError({ code: 'permission-denied', message: 'RTDB Rules ne access block kiya. Rules mein ".read": true set karo.' });
+    } else {
       showNetworkError(err);
     }
-  );
+  });
 }
 
 function initFirebase() {
@@ -1003,7 +1009,7 @@ updateCartCount();
     firebaseConfig = data.firebase;
     ZAP_KEY = data.zapKey || '';
     if(!firebase.apps.length){ firebase.initializeApp(firebaseConfig); }
-    db = firebase.firestore();
+    db = firebase.database();
     initFirebase();
   } catch(e) {
     console.error('Config/Firebase init failed:', e);
