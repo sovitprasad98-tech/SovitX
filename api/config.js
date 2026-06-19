@@ -29,6 +29,6 @@ module.exports = async (req, res) => {
       messagingSenderId: process.env.50514494667,
       appId:             process.env.1:50514494667:web:facf9362e4082f867a474e,
     },
-    zapKey: process.env.ZAP_KEY,
+    zapKey: process.env.zapeb67bd8c953316fdbb75e97a4c44c795,
   });
 };
